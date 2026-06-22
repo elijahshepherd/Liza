@@ -26,18 +26,30 @@ Liza/
 
 ## Tech Stack
 
-- Language/Framework 1
-- Language/Framework 2
-- Language/Framework 3
+- TypeScript/JavaScript
+- Electron
+- React
 
 ## Development Setup
 
 ```bash
-# Setup instructions
+# Clone the repository
+git clone https://github.com/elijahshepherd/Liza
+
+# Navigate to project directory
+cd Liza
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
 ## Roadmap
 
-- [ ] Milestone 1
-- [ ] Milestone 2
-- [ ] Milestone 3
+- [ ] Core editor functionality
+- [ ] Image format support (PNG, JPEG, SVG)
+- [ ] Layer management system
+- [ ] Export capabilities
+- [ ] Plugin architecture
