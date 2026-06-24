@@ -1,6 +1,6 @@
 {
   "name": "liza-editor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Professional graphic design application",
   "main": "dist/main/index.js",
   "author": "Elijah Shepherd",
