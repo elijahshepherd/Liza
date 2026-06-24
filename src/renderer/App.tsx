@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Canvas } from './components/Canvas/Canvas';
 import { Toolbar } from './components/Toolbar/Toolbar';
 import { LayersPanel } from './components/LayersPanel/LayersPanel';
@@ -11,66 +11,103 @@ import { useToolStore } from './store/toolStore';
 import { useUIStore } from './store/uiStore';
 import './styles.css';
 
+// Handler functions defined outside component to avoid stale closures
+async function handleOpenProject() {
+  if (!window.electronAPI) return;
+  const result = await window.electronAPI.openProject();
+  if (result) {
+    useCanvasStore.getState().loadProject(result.project);
+  }
+}
+
+async function handleSaveProject() {
+  if (!window.electronAPI) return;
+  const project = useCanvasStore.getState().getProject();
+  await window.electronAPI.saveProject(project);
+}
+
+async function handleSaveProjectAs() {
+  if (!window.electronAPI) return;
+  const project = useCanvasStore.getState().getProject();
+  await window.electronAPI.saveProject(project, undefined);
+}
+
+async function handleExport() {
+  if (!window.electronAPI) return;
+  const { exportCanvas } = useCanvasStore.getState();
+  const data = await exportCanvas();
+  if (data) {
+    await window.electronAPI.exportImage(data);
+  }
+}
+
 const App: React.FC = () => {
   const { zoom, panX, panY, setZoom, setPan, undo, redo, selectAll, deselect, newProject } = useCanvasStore();
   const { activeTool, setActiveTool } = useToolStore();
   const { togglePanel } = useUIStore();
 
+  // Initialize project on mount
+  useEffect(() => {
+    newProject();
+  }, [newProject]);
+
   // Handle menu actions from main process
+  const handleMenuAction = useCallback((action: string) => {
+    switch (action) {
+      case 'new':
+        newProject();
+        break;
+      case 'open':
+        handleOpenProject();
+        break;
+      case 'save':
+        handleSaveProject();
+        break;
+      case 'save-as':
+        handleSaveProjectAs();
+        break;
+      case 'export':
+        handleExport();
+        break;
+      case 'undo':
+        undo();
+        break;
+      case 'redo':
+        redo();
+        break;
+      case 'select-all':
+        selectAll();
+        break;
+      case 'deselect':
+        deselect();
+        break;
+      case 'zoom-in':
+        setZoom(Math.min(zoom * 1.25, 10));
+        break;
+      case 'zoom-out':
+        setZoom(Math.max(zoom / 1.25, 0.1));
+        break;
+      case 'zoom-fit':
+        setZoom(1);
+        setPan(0, 0);
+        break;
+      case 'zoom-100':
+        setZoom(1);
+        break;
+      case 'toggle-rulers':
+        togglePanel('rulers');
+        break;
+      case 'toggle-grid':
+        togglePanel('grid');
+        break;
+    }
+  }, [newProject, undo, redo, selectAll, deselect, setZoom, setPan, togglePanel, zoom]);
+
   useEffect(() => {
     if (window.electronAPI) {
-      window.electronAPI.onMenuAction((action: string) => {
-        switch (action) {
-          case 'new':
-            newProject();
-            break;
-          case 'open':
-            handleOpenProject();
-            break;
-          case 'save':
-            handleSaveProject();
-            break;
-          case 'save-as':
-            handleSaveProjectAs();
-            break;
-          case 'export':
-            handleExport();
-            break;
-          case 'undo':
-            undo();
-            break;
-          case 'redo':
-            redo();
-            break;
-          case 'select-all':
-            selectAll();
-            break;
-          case 'deselect':
-            deselect();
-            break;
-          case 'zoom-in':
-            setZoom(Math.min(zoom * 1.25, 10));
-            break;
-          case 'zoom-out':
-            setZoom(Math.max(zoom / 1.25, 0.1));
-            break;
-          case 'zoom-fit':
-            setZoom(1);
-            setPan(0, 0);
-            break;
-          case 'zoom-100':
-            setZoom(1);
-            break;
-          case 'toggle-rulers':
-            togglePanel('rulers');
-            break;
-          case 'toggle-grid':
-            togglePanel('grid');
-            break;
-        }
-      });
+      window.electronAPI.onMenuAction(handleMenuAction);
     }
-  }, [zoom]);
+  }, [handleMenuAction]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -165,34 +202,5 @@ const App: React.FC = () => {
     </div>
   );
 };
-
-async function handleOpenProject() {
-  if (!window.electronAPI) return;
-  const result = await window.electronAPI.openProject();
-  if (result) {
-    useCanvasStore.getState().loadProject(result.project);
-  }
-}
-
-async function handleSaveProject() {
-  if (!window.electronAPI) return;
-  const project = useCanvasStore.getState().getProject();
-  await window.electronAPI.saveProject(project);
-}
-
-async function handleSaveProjectAs() {
-  if (!window.electronAPI) return;
-  const project = useCanvasStore.getState().getProject();
-  await window.electronAPI.saveProject(project, undefined);
-}
-
-async function handleExport() {
-  if (!window.electronAPI) return;
-  const { exportCanvas } = useCanvasStore.getState();
-  const data = await exportCanvas();
-  if (data) {
-    await window.electronAPI.exportImage(data);
-  }
-}
 
 export default App;

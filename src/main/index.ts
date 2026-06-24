@@ -1,10 +1,9 @@
-import electron from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import log from 'electron-log';
+import * as electron from 'electron';
+import { app, BrowserWindow, Menu, dialog, ipcMain, shell } from 'electron';
 import sharp from 'sharp';
-
-const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = electron;
 
 // Configure logging
 log.transports.file.level = 'info';
